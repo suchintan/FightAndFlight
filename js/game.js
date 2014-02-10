@@ -39,23 +39,19 @@ Q.Sprite.extend("Player",{
     if(Q.inputs['fire']){
       focus += 1;
     }else{
-      focus -= 1;
+      focus -= 0.25
     }
     if(focus >= 100){
       focus = 100;
-      // this.p.jumping = false;
-      // if(!this.p.lev) {
-      //   this.p.lev = true;
-      //   this.p.y -= 32;
-      // }
     }
     if(focus > 80) {
+      this.p.lev = true;
       this.p.jumping = false;
       this.p.landed = 0.2;
     }
-    // if(focus <= 80) {
-    //   this.p.lev = false;
-    // }
+    if(focus <= 80) {
+      this.p.lev = false;
+    }
     if(focus <= 0){
       focus = 0;
     }
@@ -106,6 +102,40 @@ Q.Sprite.extend("Enemy",{
 });
 
 
+// Create the EnemyFloat class to add in some baddies
+Q.Sprite.extend("FloatEnemy",{
+  init: function(p) {
+    this._super(p, { sheet: 'enemy', vx: 100 });
+    this.permaY = this.p.y
+
+    // Enemies use the Bounce AI to change direction 
+    // whenver they run into something.
+    this.add('2d, aiBounce');
+    
+    // Listen for a sprite collision, if it's the player,
+    // end the game unless the enemy is hit on top
+    this.on("bump.left,bump.right,bump.bottom",function(collision) {
+      if(collision.obj.isA("Player")) { 
+        Q.stageScene("endGame",1, { label: "You Died" }); 
+        collision.obj.destroy();
+      }
+    });
+    
+    // If the enemy gets hit on the top, destroy it
+    // and give the user a "hop"
+    this.on("bump.top",function(collision) {
+      if(collision.obj.isA("Player")) { 
+        this.destroy();
+        collision.obj.p.vy = -300;
+      }
+    });
+  },
+  step: function (dt) {
+    // this.p._super(dt);
+    this.p.y = this.permaY - dt * this.p.vy;
+  }
+});
+
 
 
 // Create a new scene called level 1
@@ -127,6 +157,14 @@ Q.scene("level1",function(stage) {
   stage.insert(new Q.Enemy({ x: 700, y: 200 }));
   stage.insert(new Q.Enemy({ x: 800, y: 200 }));
   stage.insert(new Q.Enemy({ x: 450, y: 390 }));
+  stage.insert(new Q.FloatEnemy({ x: 350, y: 456 }));
+  stage.insert(new Q.FloatEnemy({ x: 250, y: 522 }));
+  stage.insert(new Q.FloatEnemy({ x: 300, y: 586 }));
+  stage.insert(new Q.FloatEnemy({ x: 220, y: 640 }));
+  stage.insert(new Q.FloatEnemy({ x: 330, y: 424 }));
+  stage.insert(new Q.FloatEnemy({ x: 210, y: 490 }));
+  stage.insert(new Q.FloatEnemy({ x: 390, y: 554 }));
+  stage.insert(new Q.FloatEnemy({ x: 200, y: 608 }));
   
   // Finally add in the tower goal
   stage.insert(new Q.Tower({ x: 180, y: 275 }));
@@ -140,7 +178,7 @@ Q.scene('hud',function(stage) {
   }));
 
   var strength = container.insert(new Q.UI.Text({x:50, y: 20,
-    label: "Focus: " + focus + '%', color: "black" }));
+    label: "Focus: " + parseInt(focus + "") + '%', color: "black" }));
 
   container.fit(20);
 });

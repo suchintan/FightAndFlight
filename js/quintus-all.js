@@ -3980,7 +3980,7 @@ Quintus.Input = function(Q) {
         }
         
         if(p.landed > 0 && (Q.inputs['up'] || Q.inputs['action']) && !p.jumping) {
-          p.vy = p.jumpSpeed;
+          p.vy = p.lev ? p.jumpSpeed / 2.5 : p.jumpSpeed;
           p.landed = -dt;
           p.jumping = true;
         } else if(Q.inputs['up'] || Q.inputs['action']) {
