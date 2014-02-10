@@ -15,8 +15,8 @@ Q.Sprite.extend("Player",{
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
       sheet: "player",  // Setting a sprite sheet sets sprite width and height
-      x: 410,           // You can also set additional properties that can
-      y: 90,            // be overridden on object creation
+      x: 575,           // You can also set additional properties that can
+      y: 340,            // be overridden on object creation
     });
     
     // Add in pre-made components to get up and running quickly
@@ -43,7 +43,19 @@ Q.Sprite.extend("Player",{
     }
     if(focus >= 100){
       focus = 100;
+      // this.p.jumping = false;
+      // if(!this.p.lev) {
+      //   this.p.lev = true;
+      //   this.p.y -= 32;
+      // }
     }
+    if(focus > 80) {
+      this.p.jumping = false;
+      this.p.landed = 0.2;
+    }
+    // if(focus <= 80) {
+    //   this.p.lev = false;
+    // }
     if(focus <= 0){
       focus = 0;
     }
@@ -112,11 +124,12 @@ Q.scene("level1",function(stage) {
   stage.add("viewport").follow(player);
   
   // Add in a couple of enemies
-  stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-  stage.insert(new Q.Enemy({ x: 800, y: 0 }));
+  stage.insert(new Q.Enemy({ x: 700, y: 200 }));
+  stage.insert(new Q.Enemy({ x: 800, y: 200 }));
+  stage.insert(new Q.Enemy({ x: 450, y: 390 }));
   
   // Finally add in the tower goal
-  stage.insert(new Q.Tower({ x: 180, y: 50 }));
+  stage.insert(new Q.Tower({ x: 180, y: 275 }));
 
   stage.insert(new Q.UI.Text({x:player.x-50, y:player.y-50, label: "Focus: " + focus}));
 });
