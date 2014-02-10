@@ -57,11 +57,7 @@ Q.Sprite.extend("Player",{
     }
     Q.stageScene('hud', 2);
 
-    // if(this.p.vy >= 0){
-      this.p.gravityY = 980 * (1 - (focus/150));
-    // }
-    console.log(this.p.ax);
-      
+    this.p.gravityY = 980 * (1 - (focus/150));
   }
 });
 
@@ -157,14 +153,18 @@ Q.scene("level1",function(stage) {
   stage.insert(new Q.Enemy({ x: 700, y: 200 }));
   stage.insert(new Q.Enemy({ x: 800, y: 200 }));
   stage.insert(new Q.Enemy({ x: 450, y: 390 }));
-  stage.insert(new Q.FloatEnemy({ x: 350, y: 456 }));
-  stage.insert(new Q.FloatEnemy({ x: 250, y: 522 }));
-  stage.insert(new Q.FloatEnemy({ x: 300, y: 586 }));
-  stage.insert(new Q.FloatEnemy({ x: 220, y: 640 }));
-  stage.insert(new Q.FloatEnemy({ x: 330, y: 424 }));
-  stage.insert(new Q.FloatEnemy({ x: 210, y: 490 }));
-  stage.insert(new Q.FloatEnemy({ x: 390, y: 554 }));
-  stage.insert(new Q.FloatEnemy({ x: 200, y: 608 }));
+
+  for(var c = 0; c < 8; c++){
+    stage.insert(new Q.FloatEnemy({ x: (Math.random() * 32 * 4) + 224, y: 624 - (c * 32)}));
+  }
+  // stage.insert(new Q.FloatEnemy({ x: 330, y: 424 }));
+  // stage.insert(new Q.FloatEnemy({ x: 350, y: 456 }));
+  // stage.insert(new Q.FloatEnemy({ x: 210, y: 490 }));
+  // stage.insert(new Q.FloatEnemy({ x: 250, y: 522 }));
+  // stage.insert(new Q.FloatEnemy({ x: 390, y: 554 }));
+  // stage.insert(new Q.FloatEnemy({ x: 300, y: y - yup }));
+  // stage.insert(new Q.FloatEnemy({ x: 220, y: 640 }));
+  // stage.insert(new Q.FloatEnemy({ x: 220, y: 608 }));
   
   // Finally add in the tower goal
   stage.insert(new Q.Tower({ x: 180, y: 275 }));
@@ -206,10 +206,6 @@ Q.scene('endGame',function(stage) {
   // Expand the container to visibily fit it's contents
   container.fit(20);
 });
-
-window.addEventListener('keypress', function (e) {
-    console.log(e.keyCode);
-}, false);
 
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
