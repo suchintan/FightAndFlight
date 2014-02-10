@@ -5,7 +5,7 @@ var Q = Quintus()                          // Create a new engine instance
         .controls()                        // Add in default controls (keyboard, buttons)
         .touch();                          // Add in touch support (for the UI)
               
-var focus = 0;
+var calm = 0;
         
 // You can create a sub-class by extending the Q.Sprite class to create Q.Player
 Q.Sprite.extend("Player",{
@@ -37,27 +37,27 @@ Q.Sprite.extend("Player",{
 
   step: function(dt) {
     if(Q.inputs['fire']){
-      focus += 1;
+      calm += 1;
     }else{
-      focus -= 0.25
+      calm -= 0.25
     }
-    if(focus >= 100){
-      focus = 100;
+    if(calm >= 100){
+      calm = 100;
     }
-    if(focus > 80) {
+    if(calm > 80) {
       this.p.lev = true;
       this.p.jumping = false;
       this.p.landed = 0.2;
     }
-    if(focus <= 80) {
+    if(calm <= 80) {
       this.p.lev = false;
     }
-    if(focus <= 0){
-      focus = 0;
+    if(calm <= 0){
+      calm = 0;
     }
     Q.stageScene('hud', 2);
 
-    this.p.gravityY = 980 * (1 - (focus/150));
+    this.p.gravityY = 980 * (1 - (calm/150));
   }
 });
 
@@ -169,7 +169,7 @@ Q.scene("level1",function(stage) {
   // Finally add in the tower goal
   stage.insert(new Q.Tower({ x: 180, y: 275 }));
 
-  stage.insert(new Q.UI.Text({x:player.x-50, y:player.y-50, label: "Calm: " + focus}));
+  stage.insert(new Q.UI.Text({x:player.x-50, y:player.y-50, label: "Calm: " + calm}));
 });
 
 Q.scene('hud',function(stage) {
@@ -178,7 +178,7 @@ Q.scene('hud',function(stage) {
   }));
 
   var strength = container.insert(new Q.UI.Text({x:50, y: 20,
-    label: "Calm: " + parseInt(focus + "") + '%', color: "black" }));
+    label: "Calm: " + parseInt(calm + "") + '%', color: "black" }));
 
   container.fit(20);
 });
