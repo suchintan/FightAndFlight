@@ -169,7 +169,7 @@ Q.scene("level1",function(stage) {
   // Finally add in the tower goal
   stage.insert(new Q.Tower({ x: 180, y: 275 }));
 
-  stage.insert(new Q.UI.Text({x:player.x-50, y:player.y-50, label: "Calm: " + calm}));
+  stage.insert(new Q.UI.Text({x:player.x-50, y:player.y-50, label: "Focus: " + calm}));
 });
 
 Q.scene('hud',function(stage) {
@@ -178,7 +178,7 @@ Q.scene('hud',function(stage) {
   }));
 
   var strength = container.insert(new Q.UI.Text({x:50, y: 20,
-    label: "Calm: " + parseInt(calm + "") + '%', color: "black" }));
+    label: "Focus: " + parseInt(calm + "") + '%', color: "black" }));
 
   container.fit(20);
 });
