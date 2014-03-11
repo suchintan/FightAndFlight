@@ -12,16 +12,12 @@ window.addEventListener("load",function() {
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
 // includes the `TileLayer` class as well as the `2d` componet.
-var Q = window.Q = Quintus({audioSupported: [ 'mp3','ogg' ]})
-        .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, TMX, Audio")
+var Q = window.Q = Quintus()
+        .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, TMX")
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
         // And turn on default input controls and touch input (for UI)
-        .controls(true).touch()
-        // Enable sounds.
-        .enableSound();
-
-// Load and init audio files.
+        .controls(true).touch();
 
 
 Q.SPRITE_PLAYER = 1;
@@ -42,6 +38,11 @@ Q.Sprite.extend("Player",{
       speed: 300,
       strength: 100,
       score: 0,
+      focus: 0,
+      calm: 0,
+      flying: false,
+      left: false,
+      bulletSpeed: 500,
       type: Q.SPRITE_PLAYER,
       collisionMask: Q.SPRITE_DEFAULT | Q.SPRITE_DOOR | Q.SPRITE_COLLECTABLE
     });
@@ -58,12 +59,29 @@ Q.Sprite.extend("Player",{
     this.on("jumped");
 
     Q.input.on("down",this,"checkDoor");
+    Q.input.on("fire",this,"fire");
+  },
+
+  fire: function(obj){
+    console.log("fire!");
+    var dx = this.p.x + this.p.w * 1.1;
+    var dy = this.p.y;
+    var dvx = this.p.bulletSpeed;
+    var dist = (this.p.focus * 0.1  + 10) * this.p.bullsetSpeed;
+    if(this.p.left){
+      dvx = -dvx;
+      dx -= 2 * 1.1 * this.p.w;
+    }
+
+    this.stage.insert(
+      new Q.Lazer({
+        x: dx, y: dy, vx: dvx, distance: dist 
+      })
+    )
   },
 
   jump: function(obj) {
-    // Only play sound once.
     if (!obj.p.playedJump) {
-      Q.audio.play('jump.mp3');
       obj.p.playedJump = true;
     }
   },
@@ -128,7 +146,6 @@ Q.Sprite.extend("Player",{
       if(col.tile == 24) { col.obj.setTile(col.tileX,col.tileY, 36); }
       else if(col.tile == 36) { col.obj.setTile(col.tileX,col.tileY, 24); }
     }
-    Q.audio.play('coin.mp3');
   },
 
   step: function(dt) {
@@ -147,6 +164,34 @@ Q.Sprite.extend("Player",{
         this.animate({"opacity": 1}, 1);
       }
     }
+
+    if(Q.inputs['left']){
+      this.p.left = true;
+    }
+
+    if(Q.inputs['right']){
+      this.p.left = false;
+    }
+
+    if(Q.inputs['S']) {
+      this.p.focus = (this.p.focus + 1) < 100 ? this.p.focus + 1 : 100;
+    }else{
+      this.p.focus = (this.p.focus - 1) > 0 ? this.p.focus - 1 : 0;
+    }
+    if(Q.inputs['P']) {
+      this.p.calm = (this.p.calm + 1) < 100 ? this.p.calm + 1 : 100;
+    }else{
+      this.p.calm = (this.p.calm - 1) > 0 ? this.p.calm - 1 : 0;
+    }
+    if(this.p.calm >= 90){
+      this.p.flying = true;
+    }else{
+      this.p.flying = false;
+    }
+
+
+
+    Q.stageScene('hud', 3, this.p);
 
     if(this.p.onLadder) {
       this.p.gravity = 0;
@@ -190,7 +235,7 @@ Q.Sprite.extend("Player",{
       this.p.gravity = 1;
 
       if(Q.inputs['down'] && !this.p.door) {
-        this.p.ignoreControls = true;
+        //this.p.ignoreControls = true;
         this.play("duck_" + this.p.direction);
         if(this.p.landed > 0) {
           this.p.vx = this.p.vx * (1 - dt*2);
@@ -232,6 +277,12 @@ Q.Sprite.extend("Player",{
 
     if(this.p.y > 3200) {
       this.resetLevel();
+    }
+
+    if(this.p.flying){
+      this.p.gravity = 0;
+    }else{
+      this.p.gravity = this.p.gravity * (1 - this.p.calm / 100 * 0.75);
     }
   }
 });
@@ -276,13 +327,11 @@ Q.Sprite.extend("Enemy", {
   hit: function(col) {
     if(col.obj.isA("Player") && !col.obj.p.immune && !this.p.dead) {
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
-      Q.audio.play('hit.mp3');
     }
   },
 
   die: function(col) {
-    if(col.obj.isA("Player")) {
-      Q.audio.play('coin.mp3');
+    if(col.obj.isA("Player") || col.obj.isA("Lazer")) {
       this.p.vx=this.p.vy=0;
       this.play('dead');
       this.p.dead = true;
@@ -316,6 +365,60 @@ Q.Enemy.extend("Snail", {
 
 });
 
+Q.Sprite.extend("Lazer", {
+  init: function(p,defaults) {
+
+    this._super(p,Q._defaults(defaults||{},{
+      vx: 50,
+      w:100,
+      h:50,
+      defaultDirection: 'left',
+      startX: p.x,
+      type: Q.SPRITE_ENEMY,
+      collisionMask: Q.SPRITE_DEFAULT
+    }));
+
+    this.add("2d");
+    this.on("bump.left",this,"hit");
+    this.on("bump.right",this,"hit");
+    this.on("bump.top",this,"hit");
+    this.on("bump.bottom",this,"hit");
+    this.p.gravity = 0;
+  },
+
+  draw: function(ctx) {
+    ctx.fillStyle = "#FFB00F";
+    ctx.fillRect(-this.p.cx,-this.p.cy,this.p.w,this.p.h);
+  },
+
+  step: function(dt) {
+    var p = this.p;
+
+    p.vx += p.ax * dt;
+
+    p.x += p.vx * dt;
+
+    if(Math.abs(p.x - p.startX) > p.distance){
+      this.destroy();
+    }
+  },
+
+  hit: function(col) {
+      console.log("boop");
+    if(col.obj.isA("Enemy")) {
+      col.obj.trigger('bump.top', {"enemy":this,"col":col});
+    }
+    this.die(col);
+  },
+
+  die: function(col) {
+    console.log("deadsies");
+    if(!col.obj.isA("Player")){
+      this.destroy();
+    }
+  }
+})
+
 Q.Sprite.extend("Collectable", {
   init: function(p) {
     this._super(p,{
@@ -339,7 +442,6 @@ Q.Sprite.extend("Collectable", {
       colObj.p.score += this.p.amount;
       Q.stageScene('hud', 3, colObj.p);
     }
-    Q.audio.play('coin.mp3');
     this.destroy();
   }
 });
@@ -376,7 +478,6 @@ Q.Collectable.extend("Heart", {
     if (this.p.amount) {
       colObj.p.strength = Math.max(colObj.p.strength + 25, 100);
       Q.stageScene('hud', 3, colObj.p);
-      Q.audio.play('heart.mp3');
     }
     this.destroy();
   }
@@ -399,10 +500,15 @@ Q.scene('hud',function(stage) {
   var strength = container.insert(new Q.UI.Text({x:50, y: 20,
     label: "Health: " + stage.options.strength + '%', color: "white" }));
 
+  var strength = container.insert(new Q.UI.Text({x:350, y: 20,
+    label: "Focus: " + stage.options.focus + '%', color: "white" }));
+
+  var strength = container.insert(new Q.UI.Text({x:500, y: 20,
+    label: "Calm: " + stage.options.calm + '%', color: "white" }));
   container.fit(20);
 });
 
-Q.loadTMX("level1.tmx, collectables.json, doors.json, enemies.json, fire.mp3, jump.mp3, heart.mp3, hit.mp3, coin.mp3, player.json, player.png", function() {
+Q.loadTMX("level1.tmx, collectables.json, doors.json, enemies.json, player.json, player.png", function() {
     Q.compileSheets("player.png","player.json");
     Q.compileSheets("collectables.png","collectables.json");
     Q.compileSheets("enemies.png","enemies.json");
