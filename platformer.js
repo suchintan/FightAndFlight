@@ -18,8 +18,9 @@ var Q = window.Q = Quintus()
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
         // And turn on default input controls and touch input (for UI)
-        .controls(true).touch();
-
+        .controls(true).touch()
+        
+Q.input.mouseControls({cursor: true});
 
 Q.SPRITE_PLAYER = 1;
 Q.SPRITE_COLLECTABLE = 2;
@@ -174,43 +175,60 @@ Q.Sprite.extend("Player",{
       this.p.left = false;
     }
 
-    if (!oneInQueue)
-    {
-      oneInQueue = true;
-      var user = this;
-      $.ajax({
-        type:  'GET',
-        dataType: "jsonp",
-        url:  'http://localhost:8080/ESenseData.json',
-        success: function(response) {
+    var $;
+
+    var DATASOURCE = 'neurosky';
+    var user = this;
+    if (DATASOURCE == 'neurosky' && $ !== undefined) {
+      if (!oneInQueue) {
+        oneInQueue = true;
+        $.ajax({
+          type:  'GET',
+          dataType: "jsonp",
+          url:  'http://localhost:8080/ESenseData.json',
+          success: function (response) {
             user.p.focus = parseInt(response.attention);
             user.p.calm = parseInt(response.meditation);            
           },
-        error: function(xhr, textStatus, errorThrown)
-        {
-          console.log(xhr.toString());
-          console.log(textStatus);
-          console.log(errorThrown);
-          if(Q.inputs['S']) {
-            user.p.focus = (user.p.focus + 1) < 100 ? user.p.focus + 1 : 100;
-          }else{
-            user.p.focus = (user.p.focus - 1) > 0 ? user.p.focus - 1 : 0;
+          error: function (xhr, textStatus, errorThrown) {
+            console.log(xhr.toString());
+            console.log(textStatus);
+            console.log(errorThrown);
+            keyboardData(); // fallback to keyboard
+          },
+          complete: function (jqXHR, textStatus) {
+            oneInQueue = false;
           }
-          if(Q.inputs['P']) {
-            user.p.calm = (user.p.calm + 1) < 100 ? user.p.calm + 1 : 100;
-          }else{
-            user.p.calm = (user.p.calm - 1) > 0 ? user.p.calm - 1 : 0;
-          }
-        },
-        complete: function(jqXHR, textStatus){
-          oneInQueue = false;
-        }
         });
-      if(this.p.calm >= 50){
-          this.p.flying = true;
-        }else{
-          this.p.flying = false;
-        }
+      }
+    } else if (DATASOURCE == 'mouse') { // debug mode with mouse
+      if (Q.inputs['C']) {
+        console.log('Q.inputs["mouseX"] - this.p.x', (Q.inputs["mouseX"] - this.p.x));
+        console.log('Q.inputs["mouseY"] - this.p.y', (Q.inputs["mouseY"] - this.p.y));
+        this.p.focus = (Math.abs(Q.inputs["mouseX"] - this.p.x) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseX"] - this.p.x)));
+        this.p.calm = (Math.abs(Q.inputs["mouseY"] - this.p.y) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseY"] - this.p.y)));
+      }
+    } else {
+      keyboardData(); // debug mode with keyboard
+    }
+
+    function keyboardData () {
+      if (Q.inputs['S']) {
+        user.p.focus = (user.p.focus + 1) < 100 ? user.p.focus + 1 : 100;
+      } else {
+        user.p.focus = (user.p.focus - 1) > 0 ? user.p.focus - 1 : 0;
+      }
+      if (Q.inputs['P']) {
+        user.p.calm = (user.p.calm + 1) < 100 ? user.p.calm + 1 : 100;
+      } else {
+        user.p.calm = (user.p.calm - 1) > 0 ? user.p.calm - 1 : 0;
+      }
+    }
+
+    if (this.p.calm >= 75){
+      this.p.flying = true;
+    } else {
+      this.p.flying = false;
     }
     
     Q.stageScene('hud', 3, this.p);
@@ -314,18 +332,28 @@ Q.Sprite.extend("Enemy", {
 
     this._super(p,Q._defaults(defaults||{},{
       sheet: p.sprite,
-      vx: 50,
+      vx: -50,
       defaultDirection: 'left',
       type: Q.SPRITE_ENEMY,
-      collisionMask: Q.SPRITE_DEFAULT
+      collisionMask: Q.SPRITE_FRIENDLY + Q.SPRITE_PLAYER
     }));
 
     this.add("2d, aiBounce, animation");
     this.on("bump.top",this,"die");
+    this.on("bump.left",this,"die");
+    this.on("bump.right",this,"die");
     this.on("hit.sprite",this,"hit");
   },
 
   step: function(dt) {
+    var p = this.p;
+
+    p.vx += p.ax * dt;
+    p.vy += p.ay * dt;
+
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+
     if(this.p.dead) {
       this.del('2d, aiBounce');
       this.p.deadTimer++;
@@ -335,13 +363,6 @@ Q.Sprite.extend("Enemy", {
       }
       return;
     }
-    var p = this.p;
-
-    p.vx += p.ax * dt;
-    p.vy += p.ay * dt;
-
-    p.x += p.vx * dt;
-    p.y += p.vy * dt;
 
     this.play('walk');
   },
@@ -354,18 +375,27 @@ Q.Sprite.extend("Enemy", {
 
   die: function(col) {
     if(col.obj.isA("Player") || col.obj.isA("Lazer")) {
-      this.p.vx=this.p.vy=0;
+      this.p.vx = 0;
       this.play('dead');
       this.p.dead = true;
       var that = this;
       col.obj.p.vy = -300;
       this.p.deadTimer = 0;
+      this.p.vy = 300;
+      this.p.ay = 40;
+      this.p.gravity = 1;
     }
   }
 });
 
 Q.Enemy.extend("Fly", {
-
+  init: function(p) {
+    this._super(p,{
+      w: 55,
+      h: 34
+    });
+    this.p.gravity = 0;
+  }
 });
 
 Q.Enemy.extend("Slime", {
@@ -384,7 +414,6 @@ Q.Enemy.extend("Snail", {
       h: 36
     });
   }
-
 });
 
 Q.Sprite.extend("Lazer", {
@@ -396,8 +425,8 @@ Q.Sprite.extend("Lazer", {
       h:50,
       defaultDirection: 'left',
       startX: p.x,
-      type: Q.SPRITE_ENEMY,
-      collisionMask: Q.SPRITE_DEFAULT
+      type: Q.SPRITE_FRIENDLY,
+      collisionMask: Q.SPRITE_ENEMY + Q.SPRITE_DEFAULT
     }));
 
     this.add("2d");
@@ -513,7 +542,7 @@ Q.scene("level1",function(stage) {
 
 Q.scene('hud',function(stage) {
   var container = stage.insert(new Q.UI.Container({
-    x: 50, y: 0
+    x: 50, y: 0, fill: "#000"
   }));
 
   var label = container.insert(new Q.UI.Text({x:200, y: 20,
