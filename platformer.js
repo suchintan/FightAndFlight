@@ -177,7 +177,7 @@ Q.Sprite.extend("Player",{
 
     var $;
 
-    var DATASOURCE = 'neurosky';
+    var DATASOURCE = 'mouse';
     var user = this;
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
       if (!oneInQueue) {
@@ -202,12 +202,10 @@ Q.Sprite.extend("Player",{
         });
       }
     } else if (DATASOURCE == 'mouse') { // debug mode with mouse
-      if (Q.inputs['C']) {
-        console.log('Q.inputs["mouseX"] - this.p.x', (Q.inputs["mouseX"] - this.p.x));
-        console.log('Q.inputs["mouseY"] - this.p.y', (Q.inputs["mouseY"] - this.p.y));
-        this.p.focus = (Math.abs(Q.inputs["mouseX"] - this.p.x) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseX"] - this.p.x)));
-        this.p.calm = (Math.abs(Q.inputs["mouseY"] - this.p.y) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseY"] - this.p.y)));
-      }
+      // console.log('Q.inputs["mouseX"] - this.p.x', (Q.inputs["mouseX"] - this.p.x));
+      // console.log('Q.inputs["mouseY"] - this.p.y', (Q.inputs["mouseY"] - this.p.y));
+      this.p.focus = (Math.abs(Q.inputs["mouseX"] - this.p.x) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseX"] - this.p.x)));
+      this.p.calm = (Math.abs(Q.inputs["mouseY"] - this.p.y) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseY"] - this.p.y)));
     } else {
       keyboardData(); // debug mode with keyboard
     }
