@@ -6,8 +6,7 @@
 //
 // This is the example from the website homepage, it consists
 // a simple, non-animated platformer with some enemies and a 
-// target for the player
-var oneInQueue = false;
+// target for the player.
 window.addEventListener("load",function() {
 
 // Set up an instance of the Quintus engine  and include
@@ -174,45 +173,24 @@ Q.Sprite.extend("Player",{
       this.p.left = false;
     }
 
-    if (!oneInQueue)
-    {
-      oneInQueue = true;
-      var user = this;
-      $.ajax({
-        type:  'GET',
-        dataType: "jsonp",
-        url:  'http://localhost:8080/ESenseData.json',
-        success: function(response) {
-            user.p.focus = parseInt(response.attention);
-            user.p.calm = parseInt(response.meditation);            
-          },
-        error: function(xhr, textStatus, errorThrown)
-        {
-          console.log(xhr.toString());
-          console.log(textStatus);
-          console.log(errorThrown);
-          if(Q.inputs['S']) {
-            user.p.focus = (user.p.focus + 1) < 100 ? user.p.focus + 1 : 100;
-          }else{
-            user.p.focus = (user.p.focus - 1) > 0 ? user.p.focus - 1 : 0;
-          }
-          if(Q.inputs['P']) {
-            user.p.calm = (user.p.calm + 1) < 100 ? user.p.calm + 1 : 100;
-          }else{
-            user.p.calm = (user.p.calm - 1) > 0 ? user.p.calm - 1 : 0;
-          }
-        },
-        complete: function(jqXHR, textStatus){
-          oneInQueue = false;
-        }
-        });
-      if(this.p.calm >= 50){
-          this.p.flying = true;
-        }else{
-          this.p.flying = false;
-        }
+    if(Q.inputs['S']) {
+      this.p.focus = (this.p.focus + 1) < 100 ? this.p.focus + 1 : 100;
+    }else{
+      this.p.focus = (this.p.focus - 1) > 0 ? this.p.focus - 1 : 0;
     }
-    
+    if(Q.inputs['P']) {
+      this.p.calm = (this.p.calm + 1) < 100 ? this.p.calm + 1 : 100;
+    }else{
+      this.p.calm = (this.p.calm - 1) > 0 ? this.p.calm - 1 : 0;
+    }
+    if(this.p.calm >= 90){
+      this.p.flying = true;
+    }else{
+      this.p.flying = false;
+    }
+
+
+
     Q.stageScene('hud', 3, this.p);
 
     if(this.p.onLadder) {
