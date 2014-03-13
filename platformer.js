@@ -204,7 +204,6 @@ Q.Sprite.extend("Player",{
     } else {
       keyboardData(); // debug mode with keyboard
     }
-
     function keyboardData () {
       if (Q.inputs['S']) {
         user.p.focus = (user.p.focus + 1) < 100 ? user.p.focus + 1 : 100;
