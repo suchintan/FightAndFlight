@@ -223,7 +223,9 @@ Q.Sprite.extend("Player",{
       }
     }
 
-    repeater.p.opacity = user.p.calm / 100.0;
+    var diff = user.p.calm / 100.0 - repeater.p.opacity;
+    var amt = (diff > 0.05) ? 0.05 : (diff > -0.05 ? diff : -0.05);
+    repeater.p.opacity = repeater.p.opacity + amt;
 
     if (this.p.calm >= 75){
       this.p.flying = true;
@@ -541,6 +543,7 @@ var repeater;
 
 Q.scene("level1",function(stage) {
   repeater = stage.insert(new Q.Repeater({ asset: "cloudsbg.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
+  repeater.p.opacity = 0;
   console.log('repeater', repeater);
   Q.stageTMX("level1.tmx",stage);
   stage.add("viewport").follow(Q("Player").first());
