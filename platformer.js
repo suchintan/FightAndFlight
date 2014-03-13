@@ -10,6 +10,9 @@
 var oneInQueue = false;
 window.addEventListener("load",function() {
 
+var FOCUSTHRESHOLD = 30;
+var CALMTHRESHOLD = 70;
+
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
 // includes the `TileLayer` class as well as the `2d` componet.
@@ -73,11 +76,13 @@ Q.Sprite.extend("Player",{
       dvx = -dvx;
       dx -= 2 * 0.6 * this.p.w;
     }
-    this.stage.insert(
-      new Q.Lazer({
-        x: dx, y: dy, vx: dvx, distance: dist 
-      })
-    )
+    if (this.p.focus > FOCUSTHRESHOLD) {
+      this.stage.insert(
+        new Q.Lazer({
+          x: dx, y: dy, vx: dvx, distance: dist 
+        })
+      )
+    }
   },
 
   jump: function(obj) {
@@ -117,14 +122,14 @@ Q.Sprite.extend("Player",{
       this.p.x -=15;
       this.p.y -=15;
     }
-    else {
+    if (col.normalX == -1) {
       // Hit from right;
       this.p.x +=15;
       this.p.y -=15;
     }
-    this.p.immune = true;
-    this.p.immuneTimer = 0;
-    this.p.immuneOpacity = 1;
+    this.p.hurt = true;
+    this.p.hurtTimer = 0;
+    this.p.hurtOpacity = 1;
     this.p.strength -= 25;
     Q.stageScene('hud', 3, this.p);
     if (this.p.strength == 0) {
@@ -150,20 +155,25 @@ Q.Sprite.extend("Player",{
 
   step: function(dt) {
     var processed = false;
-    if (this.p.immune) {
-      // Swing the sprite opacity between 50 and 100% percent when immune.
-      if ((this.p.immuneTimer % 12) == 0) {
-        var opacity = (this.p.immuneOpacity == 1 ? 0 : 1);
+    if (this.p.hurt) {
+      // Swing the sprite opacity between 50 and 100% percent when hurt.
+        hudcontainer.p.fill = (hudcontainer.p.fill == "#F00") ? "#000" : "#F00";
+      if ((this.p.hurtTimer % 12) == 0) {
+        var opacity = (this.p.hurtOpacity == 1 ? 0 : 1);
         this.animate({"opacity":opacity}, 0);
-        this.p.immuneOpacity = opacity;
+        this.p.hurtOpacity = opacity;
       }
-      this.p.immuneTimer++;
-      if (this.p.immuneTimer > 144) {
+      this.p.hurtTimer++;
+      if (this.p.hurtTimer > 72) {
         // 3 seconds expired, remove immunity.
-        this.p.immune = false;
+        this.p.hurt = false;
         this.animate({"opacity": 1}, 1);
+        hudcontainer.p.fill = "#000";
       }
     }
+    hudcontainer.p.fill = "#F00";
+    Q.stageScene('hud', 3, this.p);
+    // console.log(hudcontainer.p.fill);
 
     if(Q.inputs['left']){
       this.p.left = true;
@@ -173,9 +183,9 @@ Q.Sprite.extend("Player",{
       this.p.left = false;
     }
 
-    var DATASOURCE = 'poop';
-
+    var CALMCAP = 100;
     var user = this;
+    var DATASOURCE = 'keyboard';
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
       if (!oneInQueue) {
         oneInQueue = true;
@@ -199,19 +209,19 @@ Q.Sprite.extend("Player",{
         });
       }
     } else if (DATASOURCE == 'mouse') { // debug mode with mouse
-      this.p.focus = (Math.abs(Q.inputs["mouseX"] - this.p.x) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseX"] - this.p.x)));
-      this.p.calm = (Math.abs(Q.inputs["mouseY"] - this.p.y) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseY"] - this.p.y)));
+      this.p.focus = (Math.abs(Q.inputs["mouseX"] - this.p.x) > CALMCAP ? CALMCAP : Math.abs(Math.round(Q.inputs["mouseX"] - this.p.x)));
+      this.p.calm = (Math.abs(Q.inputs["mouseY"] - this.p.y) > CALMCAP ? CALMCAP : Math.abs(Math.round(Q.inputs["mouseY"] - this.p.y)));
     } else {
       keyboardData(); // debug mode with keyboard
     }
     function keyboardData () {
       if (Q.inputs['S']) {
-        user.p.focus = (user.p.focus + 1) < 100 ? user.p.focus + 1 : 100;
+        user.p.focus = (user.p.focus + 1) < CALMCAP ? user.p.focus + 1 : CALMCAP;
       } else {
         user.p.focus = (user.p.focus - 1) > 0 ? user.p.focus - 1 : 0;
       }
       if (Q.inputs['P']) {
-        user.p.calm = (user.p.calm + 1) < 100 ? user.p.calm + 1 : 100;
+        user.p.calm = (user.p.calm + 1) < CALMCAP ? user.p.calm + 1 : CALMCAP;
       } else {
         user.p.calm = (user.p.calm - 1) > 0 ? user.p.calm - 1 : 0;
       }
@@ -221,7 +231,7 @@ Q.Sprite.extend("Player",{
     var amt = (diff > 0.05) ? 0.05 : (diff > -0.05 ? diff : -0.05);
     repeater.p.opacity = repeater.p.opacity + amt;
 
-    if (this.p.calm >= 50){
+    if (this.p.calm >= CALMTHRESHOLD){
       this.p.flying = true;
     } else {
       this.p.flying = false;
@@ -307,21 +317,24 @@ Q.Sprite.extend("Player",{
     this.p.checkDoor = false;
 
 
-    if(this.p.y > 3000 || this.p.y < 0) {
+    if(this.p.y > 3000) {
       this.stage.unfollow();
     }
-    if(this.p.y > 0 && this.p.y < 100) {
-      this.stage.follow();
+
+    if (this.p.y < 0) {
+      this.p.y = 0;
     }
 
     if(this.p.y > 4500) {
       this.resetLevel();
     }
 
+    var b = 1.33
+
     if(this.p.flying){
-      this.p.gravity = 0;
+      this.p.gravity = -1;
     }else{
-      this.p.gravity = this.p.gravity * (1 - this.p.calm / 100 * 0.75);
+      this.p.gravity = this.p.gravity * (1 - this.p.calm / 100 * b);
     }
   }
 });
@@ -334,7 +347,7 @@ Q.Sprite.extend("Enemy", {
       vx: -50,
       defaultDirection: 'left',
       type: Q.SPRITE_ENEMY,
-      collisionMask: Q.SPRITE_FRIENDLY + Q.SPRITE_PLAYER
+      collisionMask: Q.SPRITE_FRIENDLY + Q.SPRITE_PLAYER + 2048
     }));
 
     this.add("2d, aiBounce, animation");
@@ -362,13 +375,20 @@ Q.Sprite.extend("Enemy", {
         this.destroy();
       }
       return;
+    } else {
+      // if (p.vy > 0) {
+      //   p.vx = -p.vx;
+      //   // p.x = p.x - p.vx * dt * 10;
+      //   p.y = p.y - p.vy;
+      //   p.vy = 0;
+      // }
     }
 
     this.play('walk');
   },
 
   hit: function(col) {
-    if(col.obj.isA("Player") && !col.obj.p.immune && !this.p.dead) {
+    if(col.obj.isA("Player") && !col.obj.p.hurt && !this.p.dead) {
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
     }
   },
@@ -390,6 +410,7 @@ Q.Sprite.extend("Enemy", {
       this.p.vy = 300;
       this.p.ay = 40;
       this.p.gravity = 1;
+      col.obj.p.score += 50;
     }
   }
 });
@@ -419,6 +440,28 @@ Q.Enemy.extend("Snail", {
       w: 55,
       h: 36
     });
+  },
+  die: function(col) {
+    if(col.obj.isA("Player") && !this.p.dead) {
+      // console.log(col.obj);
+      col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
+      col.obj.p.vy = -500;
+    }
+  }
+});
+
+Q.Enemy.extend("Spikes", {
+  init: function(p) {
+    this._super(p,{
+      w: 72,
+      h: 72,
+      vx: 0,
+      vy: 0,
+      ax: 0,
+      ay: 0,
+      gravity: 0,
+    });
+    console.log('this.p', this.p);
   }
 });
 
@@ -427,7 +470,7 @@ Q.Sprite.extend("Lazer", {
 
     this._super(p,Q._defaults(defaults||{},{
       w:20,
-      h:10,
+      h:100,
       defaultDirection: 'left',
       startX: p.x,
       type: Q.SPRITE_FRIENDLY,
@@ -450,15 +493,24 @@ Q.Sprite.extend("Lazer", {
   step: function(dt) {
     var p = this.p;
 
-    p.vx += p.ax * dt;
-
-    p.x += p.vx * dt;
-    if(Math.abs(p.x - p.startX) > p.distance){
+    p.h--;
+    if(p.h < 0) {
       this.destroy();
     }
+
+    p.vx += p.ax * dt;
+    this.normalX = -this.p.vx/Math.abs(this.p.vx);
+
+    p.x += p.vx * dt;
+    // if(Math.abs(p.x - p.startX) > p.distance){
+    //   this.destroy();
+    // }
   },
 
   hit: function(col) {
+    if (col.obj.isA("Player")) {
+      col.obj.trigger("enemy.hit", {enemy: this, col: this});
+    }
     this.die(col);
   },
 
@@ -487,7 +539,7 @@ Q.Sprite.extend("Collectable", {
   sensor: function(colObj) {
     // Increment the score.
     if (this.p.amount) {
-      colObj.p.score += this.p.amount;
+      colObj.p.score += 100;
       Q.stageScene('hud', 3, colObj.p);
     }
     this.destroy();
@@ -532,34 +584,39 @@ Q.Collectable.extend("Heart", {
 });
 
 var repeater;
+var hudcontainer;
 
 Q.scene("level1",function(stage) {
+  var light = stage.insert(new Q.Repeater({ asset: "texture.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
+  light.p.opacity = 0.3;
   repeater = stage.insert(new Q.Repeater({ asset: "cloudsbg.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
+  // todo add red flash for getting hit
   repeater.p.opacity = 0;
   Q.stageTMX("level1.tmx",stage);
   stage.add("viewport").follow(Q("Player").first());
 });
 
+var wat = false;
 Q.scene('hud',function(stage) {
-  var container = stage.insert(new Q.UI.Container({
-    x: 50, y: 0, fill: "#000"
+  hudcontainer = stage.insert(new Q.UI.Container({
+    x: 50, y: 10, fill: "#000"
   }));
 
-  var label = container.insert(new Q.UI.Text({x:200, y: 20,
+  var label = hudcontainer.insert(new Q.UI.Text({x:200, y: 20,
     label: "Score: " + stage.options.score, color: "white" }));
 
-  var strength = container.insert(new Q.UI.Text({x:50, y: 20,
-    label: "Health: " + stage.options.strength + '%', color: "white" }));
+  var strength = hudcontainer.insert(new Q.UI.Text({x:50, y: 20,
+    label: "Health: " + Array(((stage.options.strength)/25)+1).join("♥") , color: "white" }));
 
-  var strength = container.insert(new Q.UI.Text({x:350, y: 20,
+  var strength = hudcontainer.insert(new Q.UI.Text({x:350, y: 20,
     label: "Focus: " + stage.options.focus + '%', color: "white" }));
 
-  var strength = container.insert(new Q.UI.Text({x:500, y: 20,
+  var strength = hudcontainer.insert(new Q.UI.Text({x:500, y: 20,
     label: "Calm: " + stage.options.calm + '%', color: "white" }));
-  container.fit(20);
+  hudcontainer.fit(10);
 });
 
-Q.loadTMX("level1.tmx, collectables.json, doors.json, enemies.json, player.json, player.png, cloudsbg.jpg", function() {
+Q.loadTMX("level1.tmx, collectables.json, doors.json, enemies.json, player.json, player.png, cloudsbg.jpg, texture.jpg", function() {
     Q.compileSheets("player.png","player.json");
     Q.compileSheets("collectables.png","collectables.json");
     Q.compileSheets("enemies.png","enemies.json");
@@ -582,6 +639,7 @@ Q.loadTMX("level1.tmx, collectables.json, doors.json, enemies.json, player.json,
     Q.animations("fly", EnemyAnimations);
     Q.animations("slime", EnemyAnimations);
     Q.animations("snail", EnemyAnimations);
+    Q.animations("spikes", EnemyAnimations);
     Q.stageScene("level1");
     Q.stageScene('hud', 3, Q('Player').first().p);
   
