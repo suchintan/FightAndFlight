@@ -309,11 +309,14 @@ Q.Sprite.extend("Player",{
     this.p.checkDoor = false;
 
 
-    if(this.p.y > 1600) {
+    if(this.p.y > 3000 || this.p.y < 0) {
       this.stage.unfollow();
     }
+    if(this.p.y > 0 && this.p.y < 100) {
+      this.stage.follow();
+    }
 
-    if(this.p.y > 3200) {
+    if(this.p.y > 4500) {
       this.resetLevel();
     }
 
@@ -533,8 +536,8 @@ Q.Collectable.extend("Heart", {
 });
 
 Q.scene("level1",function(stage) {
+  stage.insert(new Q.Repeater({ asset: "cloudsbg.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
   Q.stageTMX("level1.tmx",stage);
-
   stage.add("viewport").follow(Q("Player").first());
 });
 
@@ -557,7 +560,7 @@ Q.scene('hud',function(stage) {
   container.fit(20);
 });
 
-Q.loadTMX("level1.tmx, collectables.json, doors.json, enemies.json, player.json, player.png", function() {
+Q.loadTMX("level1.tmx, collectables.json, doors.json, enemies.json, player.json, player.png, cloudsbg.jpg", function() {
     Q.compileSheets("player.png","player.json");
     Q.compileSheets("collectables.png","collectables.json");
     Q.compileSheets("enemies.png","enemies.json");
