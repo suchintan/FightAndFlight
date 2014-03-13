@@ -44,7 +44,7 @@ Q.Sprite.extend("Player",{
       calm: 0,
       flying: false,
       left: false,
-      bulletSpeed: 500,
+      bulletSpeed: 300,
       type: Q.SPRITE_PLAYER,
       collisionMask: Q.SPRITE_DEFAULT | Q.SPRITE_DOOR | Q.SPRITE_COLLECTABLE
     });
@@ -65,16 +65,14 @@ Q.Sprite.extend("Player",{
   },
 
   fire: function(obj){
-    console.log("fire!");
-    var dx = this.p.x + this.p.w * 1.1;
-    var dy = this.p.y;
+    var dx = this.p.x + this.p.w * 0.6;
+    var dy = this.p.y + this.p.h * 0.125;
     var dvx = this.p.bulletSpeed;
-    var dist = (this.p.focus * 0.1  + 10) * this.p.bullsetSpeed;
+    var dist = (this.p.focus * 0.02  + 0.5) * this.p.bulletSpeed;
     if(this.p.left){
       dvx = -dvx;
-      dx -= 2 * 1.1 * this.p.w;
+      dx -= 2 * 0.6 * this.p.w;
     }
-
     this.stage.insert(
       new Q.Lazer({
         x: dx, y: dy, vx: dvx, distance: dist 
@@ -175,7 +173,8 @@ Q.Sprite.extend("Player",{
       this.p.left = false;
     }
 
-    var DATASOURCE = 'neurosky';
+    var DATASOURCE = 'poop';
+
     var user = this;
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
       if (!oneInQueue) {
@@ -200,8 +199,6 @@ Q.Sprite.extend("Player",{
         });
       }
     } else if (DATASOURCE == 'mouse') { // debug mode with mouse
-      // console.log('Q.inputs["mouseX"] - this.p.x', (Q.inputs["mouseX"] - this.p.x));
-      // console.log('Q.inputs["mouseY"] - this.p.y', (Q.inputs["mouseY"] - this.p.y));
       this.p.focus = (Math.abs(Q.inputs["mouseX"] - this.p.x) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseX"] - this.p.x)));
       this.p.calm = (Math.abs(Q.inputs["mouseY"] - this.p.y) > 100 ? 100 : Math.abs(Math.round(Q.inputs["mouseY"] - this.p.y)));
     } else {
@@ -343,8 +340,9 @@ Q.Sprite.extend("Enemy", {
 
     this.add("2d, aiBounce, animation");
     this.on("bump.top",this,"die");
-    this.on("bump.left",this,"die");
-    this.on("bump.right",this,"die");
+    this.on("bump.left",this,"hitByLazer");
+    this.on("bump.right",this,"hitByLazer");
+    this.on("bump.bottom",this,"hitByLazer");
     this.on("hit.sprite",this,"hit");
   },
 
@@ -373,6 +371,12 @@ Q.Sprite.extend("Enemy", {
   hit: function(col) {
     if(col.obj.isA("Player") && !col.obj.p.immune && !this.p.dead) {
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
+    }
+  },
+
+  hitByLazer: function(col){
+    if(col.obj.isA("Lazer")){
+      this.die(col);
     }
   },
 
@@ -423,9 +427,8 @@ Q.Sprite.extend("Lazer", {
   init: function(p,defaults) {
 
     this._super(p,Q._defaults(defaults||{},{
-      vx: 50,
-      w:100,
-      h:50,
+      w:20,
+      h:10,
       defaultDirection: 'left',
       startX: p.x,
       type: Q.SPRITE_FRIENDLY,
@@ -451,25 +454,17 @@ Q.Sprite.extend("Lazer", {
     p.vx += p.ax * dt;
 
     p.x += p.vx * dt;
-
     if(Math.abs(p.x - p.startX) > p.distance){
       this.destroy();
     }
   },
 
   hit: function(col) {
-      console.log("boop");
-    if(col.obj.isA("Enemy")) {
-      col.obj.trigger('bump.top', {"enemy":this,"col":col});
-    }
     this.die(col);
   },
 
   die: function(col) {
-    console.log("deadsies");
-    if(!col.obj.isA("Player")){
-      this.destroy();
-    }
+    this.destroy();
   }
 })
 
@@ -542,7 +537,6 @@ var repeater;
 Q.scene("level1",function(stage) {
   repeater = stage.insert(new Q.Repeater({ asset: "cloudsbg.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
   repeater.p.opacity = 0;
-  console.log('repeater', repeater);
   Q.stageTMX("level1.tmx",stage);
   stage.add("viewport").follow(Q("Player").first());
 });
