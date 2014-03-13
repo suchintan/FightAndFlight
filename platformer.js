@@ -177,7 +177,7 @@ Q.Sprite.extend("Player",{
 
     var $;
 
-    var DATASOURCE = 'mouse';
+    var DATASOURCE = 'neurosky';
     var user = this;
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
       if (!oneInQueue) {
