@@ -175,8 +175,6 @@ Q.Sprite.extend("Player",{
       this.p.left = false;
     }
 
-    var $;
-
     var DATASOURCE = 'neurosky';
     var user = this;
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
@@ -227,7 +225,7 @@ Q.Sprite.extend("Player",{
     var amt = (diff > 0.05) ? 0.05 : (diff > -0.05 ? diff : -0.05);
     repeater.p.opacity = repeater.p.opacity + amt;
 
-    if (this.p.calm >= 75){
+    if (this.p.calm >= 50){
       this.p.flying = true;
     } else {
       this.p.flying = false;
