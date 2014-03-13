@@ -223,6 +223,8 @@ Q.Sprite.extend("Player",{
       }
     }
 
+    repeater.p.opacity = user.p.calm / 100.0;
+
     if (this.p.calm >= 75){
       this.p.flying = true;
     } else {
@@ -535,8 +537,11 @@ Q.Collectable.extend("Heart", {
   }
 });
 
+var repeater;
+
 Q.scene("level1",function(stage) {
-  stage.insert(new Q.Repeater({ asset: "cloudsbg.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
+  repeater = stage.insert(new Q.Repeater({ asset: "cloudsbg.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
+  console.log('repeater', repeater);
   Q.stageTMX("level1.tmx",stage);
   stage.add("viewport").follow(Q("Player").first());
 });
