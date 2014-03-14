@@ -72,6 +72,7 @@ Q.Sprite.extend("Player",{
     var dy = this.p.y + this.p.h * 0.125;
     var dvx = this.p.bulletSpeed;
     var dist = (this.p.focus * 0.02  + 0.5) * this.p.bulletSpeed;
+    var height = this.p.focus/1.2;
     if(this.p.left){
       dvx = -dvx;
       dx -= 2 * 0.6 * this.p.w;
@@ -79,7 +80,7 @@ Q.Sprite.extend("Player",{
     if (this.p.focus > FOCUSTHRESHOLD) {
       this.stage.insert(
         new Q.Lazer({
-          x: dx, y: dy, vx: dvx, distance: dist 
+          x: dx, y: dy, vx: dvx, distance: dist, h: height 
         })
       )
     }
@@ -164,7 +165,7 @@ Q.Sprite.extend("Player",{
         this.p.hurtOpacity = opacity;
       }
       this.p.hurtTimer++;
-      if (this.p.hurtTimer > 72) {
+      if (this.p.hurtTimer > 36) {
         // 3 seconds expired, remove immunity.
         this.p.hurt = false;
         this.animate({"opacity": 1}, 1);
@@ -329,6 +330,16 @@ Q.Sprite.extend("Player",{
       this.resetLevel();
     }
 
+    if(this.p.x > 8250) {
+      this.stage.unfollow();
+      this.p.ignoreControls = true;
+      this.p.gravity = 0;
+      // Stage a scene on stage 1 and pass in a label
+      Q.stageScene("endGame",1, { 
+        label: "VICTORY!"
+      }); 
+    }
+
     var b = 1.33
 
     if(this.p.flying){
@@ -388,6 +399,7 @@ Q.Sprite.extend("Enemy", {
   },
 
   hit: function(col) {
+    console.log("enemy hit");
     if(col.obj.isA("Player") && !col.obj.p.hurt && !this.p.dead) {
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
     }
@@ -400,6 +412,7 @@ Q.Sprite.extend("Enemy", {
   },
 
   die: function(col) {
+    console.log("enemy die");
     if(col.obj.isA("Player") || col.obj.isA("Lazer")) {
       this.p.vx = 0;
       this.play('dead');
@@ -446,6 +459,17 @@ Q.Enemy.extend("Snail", {
       // console.log(col.obj);
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
       col.obj.p.vy = -500;
+    } else if (col.obj.isA("Lazer") && !this.p.dead) {
+      this.p.vx = 0;
+      this.play('dead');
+      this.p.dead = true;
+      var that = this;
+      col.obj.p.vy = -300;
+      this.p.deadTimer = 0;
+      this.p.vy = 300;
+      this.p.ay = 40;
+      this.p.gravity = 1;
+      col.obj.p.score += 50;
     }
   }
 });
@@ -460,8 +484,40 @@ Q.Enemy.extend("Spikes", {
       ax: 0,
       ay: 0,
       gravity: 0,
+      type: 2,
+      collisionMask: Q.SPRITE_PLAYER
     });
     console.log('this.p', this.p);
+    // this.on("bump.top",this,"die");
+    this.on("bump.right",this,"die");
+    this.on("bump.bottom",this,"die");
+    this.on("bump.left",this,"die");
+  },
+  step: function(dt) {
+    var p = this.p;
+
+    this.permaX = this.permaX || this.p.x;
+    this.permaY = this.permaY || this.p.y;
+
+    p.vx = 0;
+    p.vy = 0;
+    p.ax = 0;
+    p.ay = 0;
+
+    p.x = this.permaX;
+    p.y = this.permaY;
+
+    this.play('walk');
+  },
+  hitByLazer: function () {},
+  hit: function () {},
+  die: function(col) {
+    if(col.obj.isA("Player") && !col.obj.p.hurt && !this.p.dead) {
+      // console.log(col.obj);
+      col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
+      console.log('col.normalY',col.normalY);
+      col.obj.p.vy = -530 * col.normalY -150;
+    }
   }
 });
 
@@ -474,7 +530,7 @@ Q.Sprite.extend("Lazer", {
       defaultDirection: 'left',
       startX: p.x,
       type: Q.SPRITE_FRIENDLY,
-      collisionMask: Q.SPRITE_ENEMY + Q.SPRITE_DEFAULT
+      collisionMask: Q.SPRITE_ENEMY | Q.SPRITE_DEFAULT
     }));
 
     this.add("2d");
@@ -493,7 +549,8 @@ Q.Sprite.extend("Lazer", {
   step: function(dt) {
     var p = this.p;
 
-    p.h--;
+    p.h -= 2;
+    p.y ++;
     if(p.h < 0) {
       this.destroy();
     }
@@ -575,6 +632,7 @@ Q.Collectable.extend("Heart", {
   // When a Heart is hit.
   sensor: function(colObj) {
     // Increment the strength.
+    console.log("heart hit")
     if (this.p.amount) {
       colObj.p.strength = Math.max(colObj.p.strength + 25, 100);
       Q.stageScene('hud', 3, colObj.p);
@@ -585,6 +643,14 @@ Q.Collectable.extend("Heart", {
 
 var repeater;
 var hudcontainer;
+
+Q.scene("endGame",function(stage) {
+  var label = stage.insert(new Q.UI.Text({
+    x: Q.width/2, 
+    y: Q.height/2,
+    label: stage.options.label
+  }));
+});
 
 Q.scene("level1",function(stage) {
   var light = stage.insert(new Q.Repeater({ asset: "texture.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
@@ -616,7 +682,7 @@ Q.scene('hud',function(stage) {
   hudcontainer.fit(10);
 });
 
-Q.loadTMX("level1.tmx, collectables.json, doors.json, enemies.json, player.json, player.png, cloudsbg.jpg, texture.jpg", function() {
+Q.loadTMX("level1.tmx, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, cloudsbg.jpg, texture.jpg", function() {
     Q.compileSheets("player.png","player.json");
     Q.compileSheets("collectables.png","collectables.json");
     Q.compileSheets("enemies.png","enemies.json");
