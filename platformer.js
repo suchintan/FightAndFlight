@@ -658,7 +658,7 @@ Q.scene("endGame",function(stage) {
 Q.scene("level1",function(stage) {
   var light = stage.insert(new Q.Repeater({ asset: "texture.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
   light.p.opacity = 0.3;
-  repeater = stage.insert(new Q.Repeater({ asset: "cloudsbg.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
+  repeater = stage.insert(new Q.Repeater({ asset: "buddhabg.png", speedX: 0.5, speedY: 0.5, type: 0 }));
   // todo add red flash for getting hit
   repeater.p.opacity = 0;
   Q.stageTMX("level1.tmx",stage);
@@ -685,7 +685,7 @@ Q.scene('hud',function(stage) {
   hudcontainer.fit(10);
 });
 
-Q.loadTMX("level1.tmx, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, cloudsbg.jpg, texture.jpg", function() {
+Q.loadTMX("level1.tmx, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, buddhabg.png, texture.jpg", function() {
     Q.compileSheets("player.png","player.json");
     Q.compileSheets("collectables.png","collectables.json");
     Q.compileSheets("enemies.png","enemies.json");
