@@ -10074,7 +10074,7 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="0"/>
+   <tile gid="117"/>
    <tile gid="153"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -13100,13 +13100,13 @@
   <properties>
    <property name="opacity" value="0"/>
   </properties>
-  <object gid="214" x="8190" y="210">
+  <object gid="214" x="7000" y="700">
    <properties>
     <property name="id" value="door-1"/>
     <property name="link" value="door-2"/>
    </properties>
   </object>
-  <object gid="214" x="7350" y="420">
+  <object gid="214" x="7140" y="1330">
    <properties>
     <property name="id" value="door-2"/>
     <property name="link" value="door-1"/>
@@ -13114,7 +13114,7 @@
   </object>
  </objectgroup>
  <objectgroup name="Sprites" width="120" height="36">
-  <object gid="157" x="7280" y="420"/>
+  <object gid="157" x="6650" y="1330"/>
   <object gid="176" x="2730" y="1680"/>
   <object gid="176" x="2660" y="1680"/>
   <object gid="176" x="2380" y="1680"/>

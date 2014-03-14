@@ -612,6 +612,7 @@ Q.Sprite.extend("Door", {
       sensor: true,
       vx: 0,
       vy: 0,
+      opacity: 0,
       gravity: 0
     });
     this.add("animation");
@@ -619,6 +620,8 @@ Q.Sprite.extend("Door", {
     this.on("sensor");
   },
   findLinkedDoor: function() {
+    this.p.opacity = 1;
+    this.stage.find(this.p.link).p.opacity = 1;
     return this.stage.find(this.p.link);
   },
   // When the player is in the door.
