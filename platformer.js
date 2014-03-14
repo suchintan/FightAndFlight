@@ -186,7 +186,7 @@ Q.Sprite.extend("Player",{
 
     var CALMCAP = 100;
     var user = this;
-    var DATASOURCE = 'keyboard';
+    var DATASOURCE = 'neurosky';
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
       if (!oneInQueue) {
         oneInQueue = true;

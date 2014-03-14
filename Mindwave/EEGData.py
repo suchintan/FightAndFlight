@@ -1,5 +1,5 @@
 from bottle import route, run
-from time import time
+import time
 
 from consider import Consider
 con = Consider()
@@ -21,9 +21,8 @@ def ESenseData():
 def EsenseDataCSV(data):
 	epoch_time = int(time.time())
 	with open('Graph.csv', 'a') as file:
-		file.write(str(epoch_time + ',' + str(data.attention) 
-			+ ',' + str(data.meditation)+ '\n')
+		file.write(str(epoch_time) + ',' + str(data.attention) + ',' + str(data.meditation)+ ',' + str(data.poor_signal) + '\n')
 
-	return ();
+	return ()
 
 run(host='localhost', port=8080, debug=True)
