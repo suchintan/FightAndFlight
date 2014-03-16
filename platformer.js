@@ -15,10 +15,12 @@ var FOCUSTHRESHOLD = 30;
 var CALMTHRESHOLD = 70;
 var DATASOURCE = 'keyboard';
 var FOCUSOVERRIDE = true;
-var CALMOVERRIDE = false;
+var CALMOVERRIDE = true;
 var FOCUS = 100;
-var CALM = 0;
+var CALM = 100;
 
+
+var currentLevel = 1;
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
 // includes the `TileLayer` class as well as the `2d` componet.
@@ -116,6 +118,7 @@ Q.Sprite.extend("Player",{
 
   resetLevel: function() {
     Q.stageScene("level1");
+    currentLevel = 1;
     this.p.strength = 100;
     this.animate({opacity: 1});
     Q.stageScene('hud', 3, this.p);
@@ -355,9 +358,19 @@ Q.Sprite.extend("Player",{
       this.p.ignoreControls = true;
       this.p.gravity = 0;
       // Stage a scene on stage 1 and pass in a label
-      Q.stageScene("endGame",1, { 
-        label: "VICTORY!"
-      }); 
+      console.log(currentLevel);
+      if(currentLevel == 2){
+        Q.clearStage(0);
+        Q.clearStage(3);
+        Q.stageScene("endGame",1, { 
+          label: "VICTORY!"
+        }); 
+      }else{
+        Q.clearStage(0);
+        Q.clearStage(3);
+        Q.stageScene("level2");
+        currentLevel = 2;
+      }
     }
 
     var b = 1.33
@@ -674,6 +687,17 @@ Q.scene("level1",function(stage) {
   stage.add("viewport").follow(Q("Player").first());
 });
 
+Q.scene("level2",function(stage) {
+  console.log("level 2");
+  var light = stage.insert(new Q.Repeater({ asset: "texture.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
+  light.p.opacity = 0.3;
+  repeater = stage.insert(new Q.Repeater({ asset: "buddhabg.png", speedX: 0.5, speedY: 0.5, type: 0 }));
+  // todo add red flash for getting hit
+  repeater.p.opacity = 0;
+  Q.stageTMX("level2.tmx",stage);
+  stage.add("viewport").follow(Q("Player").first());
+});
+
 var wat = false;
 Q.scene('hud',function(stage) {
   hudcontainer = stage.insert(new Q.UI.Container({
@@ -694,7 +718,7 @@ Q.scene('hud',function(stage) {
   hudcontainer.fit(10);
 });
 
-Q.loadTMX("level1.tmx, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, buddhabg.png, texture.jpg", function() {
+Q.loadTMX("level1.tmx, level2.tmx, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, buddhabg.png, texture.jpg", function() {
     Q.compileSheets("player.png","player.json");
     Q.compileSheets("collectables.png","collectables.json");
     Q.compileSheets("enemies.png","enemies.json");
@@ -720,7 +744,7 @@ Q.loadTMX("level1.tmx, collectables.json, collectables.png, doors.json, enemies.
     Q.animations("spikes", EnemyAnimations);
     Q.stageScene("level1");
     Q.stageScene('hud', 3, Q('Player').first().p);
-  
+    currentLevel = 1;
 }, {
   progressCallback: function(loaded,total) {
     var element = document.getElementById("loading_progress");
