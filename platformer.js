@@ -13,6 +13,11 @@ window.addEventListener("load",function() {
 
 var FOCUSTHRESHOLD = 30;
 var CALMTHRESHOLD = 70;
+var DATASOURCE = 'keyboard';
+var FOCUSOVERRIDE = true;
+var CALMOVERRIDE = false;
+var FOCUS = 100;
+var CALM = 0;
 
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
@@ -69,19 +74,20 @@ Q.Sprite.extend("Player",{
   },
 
   fire: function(obj){
+    var height = this.p.focus/1.2;
     var dx = this.p.x + this.p.w * 0.6;
-    var dy = this.p.y + this.p.h * 0.125;
+    var dy = this.p.y + this.p.h * 0.125 - height * 0.16;
     var dvx = this.p.bulletSpeed;
     var dist = (this.p.focus * 0.02  + 0.5) * this.p.bulletSpeed;
-    var height = this.p.focus/1.2;
     if(this.p.left){
       dvx = -dvx;
       dx -= 2 * 0.6 * this.p.w;
     }
+
     if (this.p.focus > FOCUSTHRESHOLD) {
       this.stage.insert(
         new Q.Lazer({
-          x: dx, y: dy, vx: dvx, distance: dist, h: height 
+          x: dx, y: dy, vx: dvx, distance: dist, h: height
         })
       )
     }
@@ -175,7 +181,6 @@ Q.Sprite.extend("Player",{
     }
     hudcontainer.p.fill = "#F00";
     Q.stageScene('hud', 3, this.p);
-    // console.log(hudcontainer.p.fill);
 
     if(Q.inputs['left']){
       this.p.left = true;
@@ -187,7 +192,6 @@ Q.Sprite.extend("Player",{
 
     var CALMCAP = 100;
     var user = this;
-    var DATASOURCE = 'neurosky';
     keyboardData();
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
       if (!oneInQueue) {
@@ -234,6 +238,13 @@ Q.Sprite.extend("Player",{
         user.p.calm = (user.p.calm + 1) < CALMCAP ? user.p.calm + 1 : CALMCAP;
       } else {
         user.p.calm = (user.p.calm - 1) > 0 ? user.p.calm - 1 : 0;
+      }
+
+      if(FOCUSOVERRIDE){
+        user.p.focus = FOCUS;
+      }
+      if(CALMOVERRIDE){
+        user.p.calm = CALM;
       }
     }
 
@@ -408,7 +419,6 @@ Q.Sprite.extend("Enemy", {
   },
 
   hit: function(col) {
-    console.log("enemy hit");
     if(col.obj.isA("Player") && !col.obj.p.hurt && !this.p.dead) {
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
     }
@@ -421,7 +431,6 @@ Q.Sprite.extend("Enemy", {
   },
 
   die: function(col) {
-    console.log("enemy die");
     if(col.obj.isA("Player") || col.obj.isA("Lazer")) {
       this.p.vx = 0;
       this.play('dead');
@@ -465,7 +474,6 @@ Q.Enemy.extend("Snail", {
   },
   die: function(col) {
     if(col.obj.isA("Player") && !this.p.dead) {
-      // console.log(col.obj);
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
       col.obj.p.vy = -500;
     } else if (col.obj.isA("Lazer") && !this.p.dead) {
@@ -496,7 +504,6 @@ Q.Enemy.extend("Spikes", {
       type: 2,
       collisionMask: Q.SPRITE_PLAYER
     });
-    console.log('this.p', this.p);
     // this.on("bump.top",this,"die");
     this.on("bump.right",this,"die");
     this.on("bump.bottom",this,"die");
@@ -522,9 +529,7 @@ Q.Enemy.extend("Spikes", {
   hit: function () {},
   die: function(col) {
     if(col.obj.isA("Player") && !col.obj.p.hurt && !this.p.dead) {
-      // console.log(col.obj);
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
-      console.log('col.normalY',col.normalY);
       col.obj.p.vy = -530 * col.normalY -150;
     }
   }
@@ -558,26 +563,22 @@ Q.Sprite.extend("Lazer", {
   step: function(dt) {
     var p = this.p;
 
-    p.h -= 2;
-    p.y ++;
+    p.h -= 4;
+    p.y += 2;
     if(p.h < 0) {
-      this.destroy();
+      this.die(this);
     }
 
     p.vx += p.ax * dt;
     this.normalX = -this.p.vx/Math.abs(this.p.vx);
 
     p.x += p.vx * dt;
-    // if(Math.abs(p.x - p.startX) > p.distance){
-    //   this.destroy();
-    // }
   },
 
   hit: function(col) {
-    if (col.obj.isA("Player")) {
-      col.obj.trigger("enemy.hit", {enemy: this, col: this});
+    if(!col.obj.isA("Player")){
+      this.die(col);
     }
-    this.die(col);
   },
 
   die: function(col) {
@@ -644,7 +645,6 @@ Q.Collectable.extend("Heart", {
   // When a Heart is hit.
   sensor: function(colObj) {
     // Increment the strength.
-    console.log("heart hit")
     if (this.p.amount) {
       colObj.p.strength = Math.max(colObj.p.strength + 25, 100);
       Q.stageScene('hud', 3, colObj.p);
