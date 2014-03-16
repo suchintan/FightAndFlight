@@ -76,7 +76,7 @@ Q.Sprite.extend("Player",{
   fire: function(obj){
     var height = this.p.focus/1.2;
     var dx = this.p.x + this.p.w * 0.6;
-    var dy = this.p.y + this.p.h * 0.125 - height * 0.16;
+    var dy = this.p.y + this.p.h * 0.125 - height * 0.17;
     var dvx = this.p.bulletSpeed;
     var dist = (this.p.focus * 0.02  + 0.5) * this.p.bulletSpeed;
     if(this.p.left){
@@ -564,7 +564,7 @@ Q.Sprite.extend("Lazer", {
     var p = this.p;
 
     p.h -= 4;
-    p.y += 2;
+    p.cy -= 2
     if(p.h < 0) {
       this.die(this);
     }
