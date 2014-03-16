@@ -8,6 +8,7 @@
 // a simple, non-animated platformer with some enemies and a 
 // target for the player
 var oneInQueue = false;
+var attn=0, medn=0, count = 0;
 window.addEventListener("load",function() {
 
 var FOCUSTHRESHOLD = 30;
@@ -187,6 +188,7 @@ Q.Sprite.extend("Player",{
     var CALMCAP = 100;
     var user = this;
     var DATASOURCE = 'neurosky';
+    keyboardData();
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
       if (!oneInQueue) {
         oneInQueue = true;
@@ -195,8 +197,15 @@ Q.Sprite.extend("Player",{
           dataType: "jsonp",
           url:  'http://localhost:8080/ESenseData.json',
           success: function (response) {
-            user.p.focus = parseInt(response.attention);
-            user.p.calm = parseInt(response.meditation);            
+            count++;
+            attn += parseInt(response.attention);
+            medn += parseInt(response.meditation);
+            if (count % 2 == 0){
+              user.p.focus = Math.round(attn/2);
+              user.p.calm = Math.round(medn/2);
+              attn = 0;
+              medn = 0;
+            }        
           },
           error: function (xhr, textStatus, errorThrown) {
             console.log(xhr.toString());
