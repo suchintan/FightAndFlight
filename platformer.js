@@ -13,9 +13,9 @@ window.addEventListener("load",function() {
 
 var FOCUSTHRESHOLD = 30;
 var CALMTHRESHOLD = 70;
-var DATASOURCE = 'keyboard';
-var FOCUSOVERRIDE = true;
-var CALMOVERRIDE = true;
+var DATASOURCE = 'neurosky';
+var FOCUSOVERRIDE = false;
+var CALMOVERRIDE = false;
 var FOCUS = 100;
 var CALM = 100;
 
@@ -194,7 +194,6 @@ Q.Sprite.extend("Player",{
 
     var CALMCAP = 100;
     var user = this;
-    keyboardData();
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
       if (!oneInQueue) {
         oneInQueue = true;
