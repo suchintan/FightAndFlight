@@ -663,7 +663,14 @@ var repeater;
 var hudcontainer;
 
 Q.scene("splashPage",function(stage) {
-
+  var button = stage.insert(new Q.UI.Button({
+        x: Q.width/2,
+        y: Q.height/2,
+        h: Q.height,
+        w: Q.width,
+        asset: "background.jpg"
+      },function(){
+      }));
   // for(var r = 0; r < Q.height/64+1; r++){
   //   for(var c = 0; c < Q.width/64+1; c++){
   //     var button = stage.insert(new Q.UI.Button({
@@ -756,7 +763,7 @@ Q.scene('hud',function(stage) {
   hudcontainer.fit(10);
 });
 
-Q.loadTMX("level1.tmx, level2.tmx, level1.png, level2.png, brick.jpg, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, buddhabg.png, texture.jpg, logo.png", function() {
+Q.loadTMX("level1.tmx, level2.tmx, background.jpg, level1.png, level2.png, brick.jpg, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, buddhabg.png, texture.jpg, logo.png", function() {
     Q.compileSheets("player.png","player.json");
     Q.compileSheets("collectables.png","collectables.json");
     Q.compileSheets("enemies.png","enemies.json");
