@@ -13,14 +13,7 @@ window.addEventListener("load",function() {
 
 var FOCUSTHRESHOLD = 30;
 var CALMTHRESHOLD = 70;
-var DATASOURCE = 'keyboard';
-var FOCUSOVERRIDE = true;
-var CALMOVERRIDE = true;
-var FOCUS = 100;
-var CALM = 100;
 
-
-var currentLevel = 1;
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
 // includes the `TileLayer` class as well as the `2d` componet.
@@ -76,20 +69,19 @@ Q.Sprite.extend("Player",{
   },
 
   fire: function(obj){
-    var height = this.p.focus/1.2;
     var dx = this.p.x + this.p.w * 0.6;
-    var dy = this.p.y + this.p.h * 0.125 - height * 0.17;
+    var dy = this.p.y + this.p.h * 0.125;
     var dvx = this.p.bulletSpeed;
     var dist = (this.p.focus * 0.02  + 0.5) * this.p.bulletSpeed;
+    var height = this.p.focus/1.2;
     if(this.p.left){
       dvx = -dvx;
       dx -= 2 * 0.6 * this.p.w;
     }
-
     if (this.p.focus > FOCUSTHRESHOLD) {
       this.stage.insert(
         new Q.Lazer({
-          x: dx, y: dy, vx: dvx, distance: dist, h: height
+          x: dx, y: dy, vx: dvx, distance: dist, h: height 
         })
       )
     }
@@ -118,7 +110,6 @@ Q.Sprite.extend("Player",{
 
   resetLevel: function() {
     Q.stageScene("level1");
-    currentLevel = 1;
     this.p.strength = 100;
     this.animate({opacity: 1});
     Q.stageScene('hud', 3, this.p);
@@ -184,6 +175,7 @@ Q.Sprite.extend("Player",{
     }
     hudcontainer.p.fill = "#F00";
     Q.stageScene('hud', 3, this.p);
+    // console.log(hudcontainer.p.fill);
 
     if(Q.inputs['left']){
       this.p.left = true;
@@ -195,6 +187,7 @@ Q.Sprite.extend("Player",{
 
     var CALMCAP = 100;
     var user = this;
+    var DATASOURCE = 'neurosky';
     keyboardData();
     if (DATASOURCE == 'neurosky' && $ !== undefined) {
       if (!oneInQueue) {
@@ -241,13 +234,6 @@ Q.Sprite.extend("Player",{
         user.p.calm = (user.p.calm + 1) < CALMCAP ? user.p.calm + 1 : CALMCAP;
       } else {
         user.p.calm = (user.p.calm - 1) > 0 ? user.p.calm - 1 : 0;
-      }
-
-      if(FOCUSOVERRIDE){
-        user.p.focus = FOCUS;
-      }
-      if(CALMOVERRIDE){
-        user.p.calm = CALM;
       }
     }
 
@@ -358,19 +344,9 @@ Q.Sprite.extend("Player",{
       this.p.ignoreControls = true;
       this.p.gravity = 0;
       // Stage a scene on stage 1 and pass in a label
-      console.log(currentLevel);
-      if(currentLevel == 2){
-        Q.clearStage(0);
-        Q.clearStage(3);
-        Q.stageScene("endGame",1, { 
-          label: "VICTORY!"
-        }); 
-      }else{
-        Q.clearStage(0);
-        Q.clearStage(3);
-        Q.stageScene("level2");
-        currentLevel = 2;
-      }
+      Q.stageScene("endGame",1, { 
+        label: "VICTORY!"
+      }); 
     }
 
     var b = 1.33
@@ -432,6 +408,7 @@ Q.Sprite.extend("Enemy", {
   },
 
   hit: function(col) {
+    console.log("enemy hit");
     if(col.obj.isA("Player") && !col.obj.p.hurt && !this.p.dead) {
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
     }
@@ -444,6 +421,7 @@ Q.Sprite.extend("Enemy", {
   },
 
   die: function(col) {
+    console.log("enemy die");
     if(col.obj.isA("Player") || col.obj.isA("Lazer")) {
       this.p.vx = 0;
       this.play('dead');
@@ -487,6 +465,7 @@ Q.Enemy.extend("Snail", {
   },
   die: function(col) {
     if(col.obj.isA("Player") && !this.p.dead) {
+      // console.log(col.obj);
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
       col.obj.p.vy = -500;
     } else if (col.obj.isA("Lazer") && !this.p.dead) {
@@ -517,6 +496,7 @@ Q.Enemy.extend("Spikes", {
       type: 2,
       collisionMask: Q.SPRITE_PLAYER
     });
+    console.log('this.p', this.p);
     // this.on("bump.top",this,"die");
     this.on("bump.right",this,"die");
     this.on("bump.bottom",this,"die");
@@ -542,7 +522,9 @@ Q.Enemy.extend("Spikes", {
   hit: function () {},
   die: function(col) {
     if(col.obj.isA("Player") && !col.obj.p.hurt && !this.p.dead) {
+      // console.log(col.obj);
       col.obj.trigger('enemy.hit', {"enemy":this,"col":col});
+      console.log('col.normalY',col.normalY);
       col.obj.p.vy = -530 * col.normalY -150;
     }
   }
@@ -576,22 +558,26 @@ Q.Sprite.extend("Lazer", {
   step: function(dt) {
     var p = this.p;
 
-    p.h -= 4;
-    p.cy -= 2
+    p.h -= 2;
+    p.y ++;
     if(p.h < 0) {
-      this.die(this);
+      this.destroy();
     }
 
     p.vx += p.ax * dt;
     this.normalX = -this.p.vx/Math.abs(this.p.vx);
 
     p.x += p.vx * dt;
+    // if(Math.abs(p.x - p.startX) > p.distance){
+    //   this.destroy();
+    // }
   },
 
   hit: function(col) {
-    if(!col.obj.isA("Player")){
-      this.die(col);
+    if (col.obj.isA("Player")) {
+      col.obj.trigger("enemy.hit", {enemy: this, col: this});
     }
+    this.die(col);
   },
 
   die: function(col) {
@@ -658,6 +644,7 @@ Q.Collectable.extend("Heart", {
   // When a Heart is hit.
   sensor: function(colObj) {
     // Increment the strength.
+    console.log("heart hit")
     if (this.p.amount) {
       colObj.p.strength = Math.max(colObj.p.strength + 25, 100);
       Q.stageScene('hud', 3, colObj.p);
@@ -687,17 +674,6 @@ Q.scene("level1",function(stage) {
   stage.add("viewport").follow(Q("Player").first());
 });
 
-Q.scene("level2",function(stage) {
-  console.log("level 2");
-  var light = stage.insert(new Q.Repeater({ asset: "texture.jpg", speedX: 0.5, speedY: 0.5, type: 0 }));
-  light.p.opacity = 0.3;
-  repeater = stage.insert(new Q.Repeater({ asset: "buddhabg.png", speedX: 0.5, speedY: 0.5, type: 0 }));
-  // todo add red flash for getting hit
-  repeater.p.opacity = 0;
-  Q.stageTMX("level2.tmx",stage);
-  stage.add("viewport").follow(Q("Player").first());
-});
-
 var wat = false;
 Q.scene('hud',function(stage) {
   hudcontainer = stage.insert(new Q.UI.Container({
@@ -718,7 +694,7 @@ Q.scene('hud',function(stage) {
   hudcontainer.fit(10);
 });
 
-Q.loadTMX("level1.tmx, level2.tmx, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, buddhabg.png, texture.jpg", function() {
+Q.loadTMX("level1.tmx, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, buddhabg.png, texture.jpg", function() {
     Q.compileSheets("player.png","player.json");
     Q.compileSheets("collectables.png","collectables.json");
     Q.compileSheets("enemies.png","enemies.json");
@@ -744,7 +720,7 @@ Q.loadTMX("level1.tmx, level2.tmx, collectables.json, collectables.png, doors.js
     Q.animations("spikes", EnemyAnimations);
     Q.stageScene("level1");
     Q.stageScene('hud', 3, Q('Player').first().p);
-    currentLevel = 1;
+  
 }, {
   progressCallback: function(loaded,total) {
     var element = document.getElementById("loading_progress");
