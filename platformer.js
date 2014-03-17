@@ -662,24 +662,14 @@ var repeater;
 var hudcontainer;
 
 Q.scene("splashPage",function(stage) {
-  var button = stage.insert(new Q.UI.Button({
-        x: Q.width/2,
-        y: Q.height/2,
+  stage.insert(new Q.UI.Text({
+        x: 0,
+        y: 0,
         h: Q.height,
         w: Q.width,
+        label: "",
         asset: "background.jpg"
-      },function(){
       }));
-  // for(var r = 0; r < Q.height/64+1; r++){
-  //   for(var c = 0; c < Q.width/64+1; c++){
-  //     var button = stage.insert(new Q.UI.Button({
-  //       x: c * 64,
-  //       y: r * 64,
-  //       asset: "brick.jpg"
-  //     },function(){
-  //     }));
-  //   }
-  // }
   var button = stage.insert(new Q.UI.Button({
     x: Q.width/2,
     y: Q.height/10,
@@ -715,8 +705,9 @@ Q.scene("splashPage",function(stage) {
       scale: 5,
       shadowColor: "rgba(0,0,0,0.5)"
     }, function(){
-        Q.stageScene(level);
-        Q.stageScene('hud', 3, Q('Player').first().p);
+      console.log("tits");
+      Q.stageScene(level);
+      Q.stageScene('hud', 3, Q('Player').first().p);
     }));
   }
 });
