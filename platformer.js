@@ -20,7 +20,6 @@ var FOCUS = 100;
 var CALM = 100;
 
 
-var currentLevel = 1;
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
 // includes the `TileLayer` class as well as the `2d` componet.
@@ -29,10 +28,8 @@ var Q = window.Q = Quintus()
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
         // And turn on default input controls and touch input (for UI)
-        .controls(true).touch()
+        .controls(true).touch();
         
-Q.input.mouseControls({cursor: true});
-
 Q.SPRITE_PLAYER = 1;
 Q.SPRITE_COLLECTABLE = 2;
 Q.SPRITE_ENEMY = 4;
@@ -117,11 +114,13 @@ Q.Sprite.extend("Player",{
   },
 
   resetLevel: function() {
-    Q.stageScene("level1");
-    currentLevel = 1;
     this.p.strength = 100;
     this.animate({opacity: 1});
-    Q.stageScene('hud', 3, this.p);
+    Q.clearStage(0);
+    Q.clearStage(3);
+    Q.stageScene("splashPage",0,{ 
+      label: "You were slain! Care to try again?"
+    });
   },
 
   enemyHit: function(data) {
@@ -358,19 +357,13 @@ Q.Sprite.extend("Player",{
       this.p.ignoreControls = true;
       this.p.gravity = 0;
       // Stage a scene on stage 1 and pass in a label
-      console.log(currentLevel);
-      if(currentLevel == 2){
-        Q.clearStage(0);
-        Q.clearStage(3);
-        Q.stageScene("endGame",1, { 
-          label: "VICTORY!"
-        }); 
-      }else{
-        Q.clearStage(0);
-        Q.clearStage(3);
-        Q.stageScene("level2");
-        currentLevel = 2;
-      }
+      
+      Q.clearStage(0);
+      Q.clearStage(3);
+
+      Q.stageScene("splashPage",0,{ 
+          label: "Victory! Congrats! Try the other level!"
+      });
     }
 
     var b = 1.33
@@ -669,12 +662,57 @@ Q.Collectable.extend("Heart", {
 var repeater;
 var hudcontainer;
 
-Q.scene("endGame",function(stage) {
+Q.scene("splashPage",function(stage) {
+
+  // for(var r = 0; r < Q.height/64+1; r++){
+  //   for(var c = 0; c < Q.width/64+1; c++){
+  //     var button = stage.insert(new Q.UI.Button({
+  //       x: c * 64,
+  //       y: r * 64,
+  //       asset: "brick.jpg"
+  //     },function(){
+  //     }));
+  //   }
+  // }
+  var button = stage.insert(new Q.UI.Button({
+    x: Q.width/2,
+    y: Q.height/10,
+    asset: "logo.png"
+  },function(){
+  }));
   var label = stage.insert(new Q.UI.Text({
     x: Q.width/2, 
-    y: Q.height/2,
+    y: button.p.y + button.p.h / 1.25,
+    scale: 1.5,
     label: stage.options.label
   }));
+
+  stage.insert(new Q.UI.Text({
+    x: Q.width/2, 
+    y: label.p.y + label.p.h * 2,
+    scale: 1.5,
+    label: "Select a level to start a new game"
+  }));
+
+  createLabel(Q.width/4, (label.p.y + label.p.h / 2 + Q.height)/2, "Level 1", "level1");
+  createLabel(Q.width/4 * 3, (label.p.y + label.p.h / 2 + Q.height)/2, "Level 2", "level2");
+
+  function createLabel(dx,dy,text, level){
+    stage.insert(new Q.UI.Button({
+      label: text,
+      y: dy,
+      x: dx,
+      fill: "gray",
+      color: "white",
+      border: 5,
+      shadow: 10,
+      scale: 5,
+      shadowColor: "rgba(0,0,0,0.5)"
+    }, function(){
+        Q.stageScene(level);
+        Q.stageScene('hud', 3, Q('Player').first().p);
+    }));
+  }
 });
 
 Q.scene("level1",function(stage) {
@@ -718,7 +756,7 @@ Q.scene('hud',function(stage) {
   hudcontainer.fit(10);
 });
 
-Q.loadTMX("level1.tmx, level2.tmx, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, buddhabg.png, texture.jpg", function() {
+Q.loadTMX("level1.tmx, level2.tmx, level1.png, level2.png, brick.jpg, collectables.json, collectables.png, doors.json, enemies.json, enemies.png, player.json, player.png, buddhabg.png, texture.jpg, logo.png", function() {
     Q.compileSheets("player.png","player.json");
     Q.compileSheets("collectables.png","collectables.json");
     Q.compileSheets("enemies.png","enemies.json");
@@ -742,9 +780,9 @@ Q.loadTMX("level1.tmx, level2.tmx, collectables.json, collectables.png, doors.js
     Q.animations("slime", EnemyAnimations);
     Q.animations("snail", EnemyAnimations);
     Q.animations("spikes", EnemyAnimations);
-    Q.stageScene("level1");
-    Q.stageScene('hud', 3, Q('Player').first().p);
-    currentLevel = 1;
+    Q.stageScene("splashPage",0,{ 
+          label: "Welcome to Focus Flyer"
+        });
 }, {
   progressCallback: function(loaded,total) {
     var element = document.getElementById("loading_progress");
