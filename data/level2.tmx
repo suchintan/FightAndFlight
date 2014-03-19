@@ -13114,7 +13114,7 @@
   </object>
  </objectgroup>
  <objectgroup name="Sprites" width="120" height="36">
-  <object gid="157" x="7862" y="1318"/>
+  <object gid="157" x="1563" y="1472"/>
   <object gid="176" x="2730" y="1680"/>
   <object gid="176" x="2660" y="1680"/>
   <object gid="176" x="2380" y="1680"/>
