@@ -14,11 +14,11 @@ window.addEventListener("load",function() {
 var FOCUSTHRESHOLD = 30;
 var CALMTHRESHOLD = 70;
 var DATASOURCE = 'neurosky';
-var FOCUSOVERRIDE = false;
-var CALMOVERRIDE = false;
+var FOCUSOVERRIDE = true;
+var CALMOVERRIDE = true;
 var FOCUS = 100;
 var CALM = 100;
-
+var fps = 0;
 
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
@@ -34,6 +34,21 @@ Q.SPRITE_PLAYER = 1;
 Q.SPRITE_COLLECTABLE = 2;
 Q.SPRITE_ENEMY = 4;
 Q.SPRITE_DOOR = 8;
+
+var totalFrames = 0;
+var totalTime = 0;
+
+// Q.gameLoop(function(dt){
+//   totalTime += dt;
+//   totalFrames += 1;
+
+//   fps = frames / totalTime * 1000 ;
+//   if(totalTime >= 1000){
+//     totalTime = 0;
+//     totalFrames = 0;
+//   }
+// });
+
 Q.Sprite.extend("Player",{
 
   init: function(p) {
@@ -164,6 +179,14 @@ Q.Sprite.extend("Player",{
   },
 
   step: function(dt) {
+    totalTime += dt;
+    totalFrames += 1;
+
+    fps = Math.floor(totalFrames / totalTime);
+    if(totalTime >= 1){
+      totalTime = 0;
+      totalFrames = 0;
+    }
     var processed = false;
     if (this.p.hurt) {
       // Swing the sprite opacity between 50 and 100% percent when hurt.
@@ -200,6 +223,7 @@ Q.Sprite.extend("Player",{
         $.ajax({
           type:  'GET',
           dataType: "jsonp",
+          data: "fps=" + fps,
           url:  'http://localhost:8080/ESenseData.json',
           success: function (response) {
             count++;
@@ -734,6 +758,8 @@ Q.scene("level2",function(stage) {
 });
 
 var wat = false;
+
+
 Q.scene('hud',function(stage) {
   hudcontainer = stage.insert(new Q.UI.Container({
     x: 50, y: 10, fill: "#000"
@@ -750,6 +776,9 @@ Q.scene('hud',function(stage) {
 
   var strength = hudcontainer.insert(new Q.UI.Text({x:500, y: 20,
     label: "Calm: " + stage.options.calm + '%', color: "white" }));
+
+  var poop = hudcontainer.insert(new Q.UI.Text({x:650, y: 20,
+    label: "FPS: " + fps + '', color: "white" }));
   hudcontainer.fit(10);
 });
 
